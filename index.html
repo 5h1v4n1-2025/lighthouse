@@ -169,20 +169,33 @@
     .waitlist-msg.success { color: var(--accent); }
     .waitlist-msg.error   { color: var(--text-secondary); }
 
-    .subtext {
+    /* ── STEPS ── */
+    .steps {
+      list-style: none;
+      display: inline-block;
+      text-align: left;
+      margin: 4px auto 0;
       font-family: var(--font);
       font-size: 12px;
       font-weight: 700;
-      color: var(--text-secondary);
-      line-height: 1.6;
-      opacity: 0.75;
-      margin: 0 auto;
+      line-height: 2;
+    }
+
+    .steps li { white-space: nowrap; }
+
+    .step-num {
+      color: var(--accent);
+      margin-right: 8px;
+    }
+
+    .step-text {
+      color: var(--text-primary);
     }
 
     /* ── FOOTER ── */
     footer {
       flex-shrink: 0;
-      padding: 16px 24px 20px;
+      padding: 16px 24px 48px;
       text-align: center;
     }
 
@@ -222,9 +235,9 @@
       animation: burst-out 2.4s cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
     }
 
-    /* hide form + subtext after burst */
+    /* hide form + steps after burst */
     .content.submitted .waitlist-form,
-    .content.submitted .subtext {
+    .content.submitted .steps {
       display: none;
     }
 
@@ -470,9 +483,11 @@
 
       <p class="waitlist-msg" id="waitlist-msg" aria-live="polite"></p>
 
-      <p class="subtext">
-        share words of affirmation for someone, and we'll reach out to them with warmth, anonymously
-      </p>
+      <ol class="steps">
+        <li><span class="step-num">01</span><span class="step-text">share an affirmation for someone</span></li>
+        <li><span class="step-num">02</span><span class="step-text">we'll share them anonymously</span></li>
+        <li><span class="step-num">03</span><span class="step-text">..and let you know how they are!</span></li>
+      </ol>
     </div>
 
     <footer>
@@ -506,33 +521,24 @@
         return;
       }
 
-      btn.disabled    = true;
-      input.disabled  = true;
-      btn.textContent = 'sending…';
+      btn.disabled   = true;
+      input.disabled = true;
 
-      try {
-        await fetch(GOOGLE_SCRIPT_URL, {
-          method:  'POST',
-          mode:    'no-cors',
-          headers: { 'Content-Type': 'text/plain' },
-          body:    JSON.stringify({ email: emailValue, timestamp: new Date().toISOString() })
-        });
-        // trigger light burst from lantern
-        document.getElementById('light-burst').classList.add('active');
+      // fire-and-forget — don't wait for the network
+      fetch(GOOGLE_SCRIPT_URL, {
+        method:  'POST',
+        mode:    'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body:    JSON.stringify({ email: emailValue, timestamp: new Date().toISOString() })
+      }).catch(() => {});
 
-        // after burst clears — hide form + subtext, show message alone
-        setTimeout(() => {
-          document.getElementById('waitlist').classList.add('submitted');
-          msg.className   = 'waitlist-msg success';
-          msg.textContent = "you're on the list, thank you for sharing your light 🌟";
-        }, 350);
-      } catch (err) {
-        btn.disabled    = false;
-        input.disabled  = false;
-        btn.textContent = 'join the waitlist';
-        msg.className   = 'waitlist-msg error';
-        msg.textContent = 'something went wrong — try again shortly';
-      }
+      // show success immediately
+      document.getElementById('light-burst').classList.add('active');
+      setTimeout(() => {
+        document.getElementById('waitlist').classList.add('submitted');
+        msg.className   = 'waitlist-msg success';
+        msg.textContent = "you're on the list, thank you for sharing your light 🌟";
+      }, 350);
     });
   </script>
 
